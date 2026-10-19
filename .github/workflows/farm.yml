@@ -2,7 +2,7 @@ name: Discord Quest Farmer
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/2 * * * *' # Runs every 2 minutes now
   workflow_dispatch:
 
 jobs:
