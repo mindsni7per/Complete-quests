@@ -2,7 +2,7 @@ name: Discord Quest Farmer
 
 on:
   schedule:
-    - cron: '*/2 * * * *' # Runs every 2 minutes now
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -18,9 +18,10 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install
+        run: npm install axios
 
       - name: Run Heartbeat
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: node orb_farmer.js
