@@ -1,0 +1,11 @@
+{
+  "name": "discord-quest-farmer",
+  "version": "1.0.0",
+  "main": "orb_farmer.js",
+  "scripts": {
+    "start": "node orb_farmer.js"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
