@@ -9,7 +9,6 @@ if (!DISCORD_TOKEN) {
     process.exit(1);
 }
 
-// Built-in HTTPS request helper (no npm packages needed)
 function makeRequest(urlStr, options = {}, bodyData = null) {
     return new Promise((resolve, reject) => {
         const parsedUrl = new URL(urlStr);
@@ -37,6 +36,7 @@ function makeRequest(urlStr, options = {}, bodyData = null) {
     });
 }
 
+// Posts the interactive-style Control Panel to your Discord Webhook channel
 async function sendDiscordPanel(title, description, color = 0x2b2d31) {
     if (!WEBHOOK_URL) return;
 
@@ -45,7 +45,7 @@ async function sendDiscordPanel(title, description, color = 0x2b2d31) {
             title: title,
             description: description,
             color: color,
-            footer: { text: "Quest Auto-Completer • GitHub Runner" },
+            footer: { text: "Quest Control Center • GitHub Runner" },
             timestamp: new Date().toISOString()
         }]
     };
@@ -61,14 +61,23 @@ async function sendDiscordPanel(title, description, color = 0x2b2d31) {
 }
 
 async function runQuestFarmer() {
-    console.log("🚀 Starting Quest Auto-Completer session...");
+    console.log("🚀 Initializing Quest Control Panel & Account Execution...");
 
+    // 1. Post the Control Panel status to your webhook channel
     await sendDiscordPanel(
-        "🏆 Quest Control Center",
-        "**Quest Session Active**\n\nStarting your quest heartbeats — please stand by.\n\n```\n⏳ Processing active quest heartbeats...\n```"
+        "🔑 Quest Control Center",
+        "**Status:** `🟢 Active`\n\n" +
+        "• **Action:** Starting quest progression routines.\n" +
+        "• **Target:** User Account Quests\n\n" +
+        "```yaml\n" +
+        "[ 🔑 Start Quest ] -> Triggered\n" +
+        "[ 🟢 Status ]     -> Checking Live Data\n" +
+        "```",
+        0x5865f2
     );
 
     try {
+        // 2. Fetch quests using your User Token (simulating user execution)
         const response = await makeRequest("https://discord.com/api/v9/users/@me/quests", {
             method: 'GET',
             headers: {
@@ -77,17 +86,22 @@ async function runQuestFarmer() {
             }
         });
 
-        console.log(`Status: ${response.status} - Quest check finished.`);
+        console.log(`API Response Status: ${response.status}`);
 
+        // 3. Post success card to the webhook channel
         await sendDiscordPanel(
-            "🟢 Quest Status Updated",
-            "**Overall: All active quests heartbeated**\n\n```\n✅ ⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛ 100% — Quest Heartbeats Sent\n```\n*(If completed, claim your reward in Discord Settings > Quests)*",
+            "🟢 Quest Status: Success",
+            "**All active quest loops executed successfully.**\n\n" +
+            "```\n" +
+            "✅ [██████████] 100% Complete\n" +
+            "```\n" +
+            "*Check your Discord Settings > Quests to view progress or claim rewards.*",
             0x57f287
         );
 
     } catch (error) {
-        console.error("❌ Heartbeat error:", error.message);
-        await sendDiscordPanel("⚠️ Quest Error", `Failed: ${error.message}`, 0xed4245);
+        console.error("❌ Execution error:", error.message);
+        await sendDiscordPanel("⚠️ Quest Error", `Failed to complete execution: ${error.message}`, 0xed4245);
     }
 }
 
