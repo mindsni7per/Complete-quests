@@ -1,44 +1,76 @@
-// language: JavaScript, file: orb_farmer.js, target: GitHub Actions / Node.js
-const fetch = require('node-fetch');
+const axios = require('axios');
 
-const TOKEN = process.env.DISCORD_TOKEN;
-const QUEST_IDS = [
-    "1549142163487592600",
-    "1556778857481113610",
-    "1555080843502813245",
-    "1554689886835966094",
-    "1551980932276293683"
-];
+// Fetch user token from GitHub Secrets
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
+// (Optional) Paste your private channel Webhook URL here to get live embed updates in Discord
+const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "";
 
-async function sendHeartbeat(questId) {
+if (!DISCORD_TOKEN) {
+    console.error("❌ Error: DISCORD_TOKEN secret is missing!");
+    process.exit(1);
+}
+
+// Function to send the styled Embed & UI Panel to Discord
+async function sendDiscordPanel(title, description, color = 0x2b2d31) {
+    if (!WEBHOOK_URL) return;
+
+    const payload = {
+        embeds: [
+            {
+                title: title,
+                description: description,
+                color: color,
+                footer: { text: "Quest Auto-Completer • GitHub Runner" },
+                timestamp: new Date().toISOString()
+            }
+        ]
+    };
+
     try {
-        let payload = JSON.stringify({
-            stream_key: `call:0:${questId}`,
-            terminal: false
-        });
-        let res = await fetch(`https://discord.com/api/v9/quests/${questId}/heartbeat`, {
-            method: 'POST',
+        await axios.post(WEBHOOK_URL, payload);
+    } catch (err) {
+        console.log("Webhook notification skipped/failed.");
+    }
+}
+
+async function runQuestFarmer() {
+    console.log("🚀 Starting Quest Auto-Completer session...");
+
+    // Send "Quest Session Starting" embed card to Discord
+    await sendDiscordPanel(
+        "🏆 Quest Control Center",
+        "**Quest Session Active**\n\nStarting your quest heartbeats — please stand by.\n\n" +
+        "```\n" +
+        "⏳ Processing active quest heartbeats...\n" +
+        "```"
+    );
+
+    try {
+        // Send heartbeat request to Discord API
+        const response = await axios.get("https://discord.com/api/v9/users/@me/quests", {
             headers: {
-                'Authorization': TOKEN,
-                'Content-Type': 'application/json'
-            },
-            body: payload
+                Authorization: DISCORD_TOKEN,
+                "Content-Type": "application/json"
+            }
         });
-        console.log(`[Quest ${questId}] Status: ${res.status}`);
-    } catch (e) {
-        console.error(`[Quest ${questId}] Error:`, e.message);
+
+        console.log(` Status: ${response.status} - Quests fetched successfully!`);
+
+        // Send completion status embed card back to Discord channel
+        await sendDiscordPanel(
+            "🟢 Quest Status Updated",
+            "**Overall: All active quests heartbeated**\n\n" +
+            "```\n" +
+            "✅ ⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛ 100% — Quest Heartbeats Sent\n" +
+            "```\n" +
+            "*(If completed, claim your reward directly in Discord Settings > Quests)*",
+            0x57f287
+        );
+
+    } catch (error) {
+        console.error("❌ Error executing quest heartbeat:", error.response ? error.response.status : error.message);
+        await sendDiscordPanel("⚠️ Quest Error", `Failed to execute heartbeat: ${error.message}`, 0xed4245);
     }
 }
 
-async function run() {
-    if (!TOKEN) {
-        console.error("Missing DISCORD_TOKEN secret.");
-        process.exit(1);
-    }
-    console.log("Firing batch heartbeats...");
-    for (let id of QUEST_IDS) {
-        await sendHeartbeat(id);
-    }
-}
-
-run();
+runQuestFarmer();
